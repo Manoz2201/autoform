@@ -1,0 +1,174 @@
+<Window x:Class="Autoform.Commands.NStandard.NStandardView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Autoform.Commands.NStandard"
+        mc:Ignorable="d"
+        Title="NStandard" Height="800" Width="1000">
+    <Window.Resources>
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+        </Style>
+        <Style x:Key="SheetButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="LightBlue"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="LightGreen"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <TabControl>
+        <TabItem Header="Sheet Generation">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Section 1: Actions -->
+                <GroupBox Header="Actions" Grid.Row="0" Margin="5">
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="SelectFileButton" Content="Select File" Style="{StaticResource ActionButtonStyle}" />
+                        <Button x:Name="SyncFabricationButton" Content="Sync Fabrication" Style="{StaticResource ActionButtonStyle}" />
+                        <Button x:Name="ExportExcelButton" Content="Export EXCEL" Style="{StaticResource ActionButtonStyle}" />
+                        <Button x:Name="GenerateSheetsButton" Content="Generate Sheets" Style="{StaticResource ActionButtonStyle}" IsEnabled="False" />
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Section 2: Available Sheets -->
+                <GroupBox Header="Available Sheets" Grid.Row="1" Margin="5">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <WrapPanel x:Name="SheetsPanel" Orientation="Horizontal" />
+                    </ScrollViewer>
+                </GroupBox>
+
+                <!-- Section 3: Data Table -->
+                <GroupBox Header="Data Table" Grid.Row="2" Margin="5">
+                    <DataGrid x:Name="MainDataGrid" AutoGenerateColumns="True" CanUserAddRows="False" IsReadOnly="True">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding [Sync Status]}" Value="Match">
+                                        <Setter Property="Background" Value="LightGreen"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding [Sync Status]}" Value="NoMatch">
+                                        <Setter Property="Background" Value="LightCoral"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                    </DataGrid>
+                </GroupBox>
+
+                <!-- Section 4: Filters -->
+                <GroupBox Header="Filter" Grid.Row="3" Margin="5">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Filter by:"/>
+                        <ComboBox x:Name="FilterColumnComboBox" Width="150" Margin="5,0"/>
+                        <Label Content="Value:"/>
+                        <ComboBox x:Name="FilterValueComboBox" Width="200" Margin="5,0">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Value}" IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button x:Name="ApplyFilterButton" Content="Apply Filter" Margin="5,0"/>
+                        <Button x:Name="ClearFilterButton" Content="Clear Filter" Margin="5,0"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Section 5: Progress -->
+                <GroupBox Header="Progress" Grid.Row="4" Margin="5">
+                    <StackPanel>
+                        <ProgressBar x:Name="MainProgressBar" Height="20" Visibility="Collapsed" />
+                        <TextBlock x:Name="ProgressTextBlock" Text="0%" HorizontalAlignment="Center" Visibility="Collapsed" />
+                    </StackPanel>
+                </GroupBox>
+            </Grid>
+        </TabItem>
+        <TabItem Header="Parameter Setting">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <GroupBox Header="Sheet Parameters" Grid.Row="0" Margin="10">
+                    <WrapPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Label Content="Drawn By:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="DrawnByTextBox" Width="100" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Label Content="Checked By:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="CheckedByTextBox" Width="100" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Label Content="Designed By:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="DesignedByTextBox" Width="100" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Label Content="Approved By:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="ApprovedByTextBox" Width="100" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Label Content="Unit Column Name:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="UnitColumnTextBox" Width="100" ToolTip="Enter the exact column name from the data grid for the 'Unit' parameter." VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Label Content="Lot No. Column Name:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="LotNoColumnTextBox" Width="100" ToolTip="Enter the exact column name from the data grid for the 'Lot No' parameter." VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <Label Content="Drawing Numbers Column Name:" VerticalAlignment="Center"/>
+                            <TextBox x:Name="DrawingNumbersColumnTextBox" Width="100" ToolTip="Enter the exact column name from the data grid for the 'Drawing Numbers' parameter." VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </WrapPanel>
+                </GroupBox>
+
+                <GroupBox Header="Parameters" Grid.Row="1" Margin="10">
+                    <StackPanel Margin="5">
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
+                            To set parameters on detail items, add columns named P1, P2, P3, etc., to your Excel sheet. 
+                            The value in each 'P' column must be a string in the format: &lt;Prefix&gt;-&lt;Value&gt; (e.g., "B-150").
+                        </TextBlock>
+
+                        <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="If 'P' column value contains..." Binding="{Binding Key}" Width="*"/>
+                                <DataGridTextColumn Header="The add-in will set this parameter" Binding="{Binding Value}" Width="*"/>
+                            </DataGrid.Columns>
+                            <DataGrid.Items>
+                                <local:ParameterMapping Key="B-val" Value="BH#(n)"/>
+                                <local:ParameterMapping Key="T-val" Value="TH#(n)"/>
+                                <local:ParameterMapping Key="S-val" Value="ST#(n) or Stiffner_(n)"/>
+                                <local:ParameterMapping Key="H-val" Value="SL#(n) or SH#(n)"/>
+                                <local:ParameterMapping Key="A1B-val" Value="A1_BH#(n)"/>
+                                <local:ParameterMapping Key="A2B-val" Value="A2_BH#(n)"/>
+                                <local:ParameterMapping Key="A1T-val" Value="A1_TH#(n)"/>
+                                <local:ParameterMapping Key="A2T-val" Value="A2_TH#(n)"/>
+                                <local:ParameterMapping Key="P-val" Value="P#(n)"/>
+                            </DataGrid.Items>
+                        </DataGrid>
+
+                        <TextBlock TextWrapping="Wrap" Margin="0,10,0,0">
+                            The parameter will be set to the corresponding 'value' from the 'P' column.
+                        </TextBlock>
+                    </StackPanel>
+                </GroupBox>
+
+                <Button x:Name="SaveSettingsButton" Content="Save Settings" Grid.Row="2" HorizontalAlignment="Right" Margin="10" Padding="10,5"/>
+            </Grid>
+        </TabItem>
+    </TabControl>
+</Window> 

@@ -1,0 +1,220 @@
+read Doc="RevitAPI Doc" for API referances and # Revit Add-in Development Rules
+
+## 1. Object-Oriented Programming (OOP) Principles
+
+### Class Structure
+- Follow SOLID principles (Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, Dependency Inversion)
+- Create separate classes for:
+  - Command implementations (implementing `IExternalCommand`)
+  - Application-level handlers (implementing `IExternalApplication`)
+  - Data models and business logic
+  - UI components and utilities
+
+### Inheritance and Composition
+- Prefer composition over inheritance for command implementations
+- Use interfaces for shared functionality between commands
+- Create base classes for common command patterns (e.g., `BaseCommand` with common error handling)
+
+## 2. Error Handling
+
+### General Rules
+- Wrap all external API calls in try-catch blocks
+- Implement comprehensive logging (use `ILogger` interface)
+- Never let unhandled exceptions bubble up to Revit
+
+### Specific Handling
+- Handle `Autodesk.Revit.Exceptions` specifically
+- Validate document state before operations
+- Check for null references from API calls
+- Implement transaction rollback on failure
+
+```csharp
+public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
+{
+    try
+    {
+        // Command implementation
+        return Result.Succeeded;
+    }
+    catch (Autodesk.Revit.Exceptions.OperationCanceledException)
+    {
+        // User cancelled operation
+        return Result.Cancelled;
+    }
+    catch (Exception ex)
+    {
+        message = $"Error: {ex.Message}";
+        Logger.Error(ex, "Command failed");
+        return Result.Failed;
+    }
+}
+```
+
+## 3. UI Development Structure
+
+### Ribbon Hierarchy
+```
+Extension (IExternalApplication) 
+    → Tab 
+        → Panel 
+            → [PushButton, StackedButtons (max 3), PulldownButton] 
+                → PushButton (for Pulldown)
+```
+
+### Implementation Rules
+- Create ribbon items in `OnStartup` of `IExternalApplication`
+- Use consistent naming conventions (e.g., "CompanyName.TabName.PanelName")
+- Follow Revit UI design guidelines for icons and sizing
+
+### Folder Structure for Icons
+```
+/Resources/Icons/
+    /TabName/
+        PanelName_ButtonName.png (16x16, 32x32)
+        PanelName_ButtonName_Large.png (32x32)
+```
+
+## 4. Ribbon UI Implementation Example
+
+```csharp
+public Result OnStartup(UIControlledApplication application)
+{
+    // Create ribbon tab
+    string tabName = "MyTools";
+    try { application.CreateRibbonTab(tabName); }
+    catch { /* Tab already exists */ }
+
+    // Create panel
+    RibbonPanel panel = application.CreateRibbonPanel(tabName, "My Panel");
+
+    // Add push button
+    PushButtonData button1Data = new PushButtonData(
+        "Command1", 
+        "Command 1", 
+        Assembly.GetExecutingAssembly().Location, 
+        "MyNamespace.Command1");
+    
+    // Set icons
+    button1Data.LargeImage = new BitmapImage(new Uri(
+        Path.Combine(iconPath, "MyPanel_Command1_Large.png"), UriKind.Absolute));
+    button1Data.Image = new BitmapImage(new Uri(
+        Path.Combine(iconPath, "MyPanel_Command1.png"), UriKind.Absolute));
+
+    PushButton button1 = panel.AddItem(button1Data) as PushButton;
+
+    // Add stacked buttons (max 3)
+    PushButtonData button2Data = /* ... */;
+    PushButtonData button3Data = /* ... */;
+    IList<RibbonItem> stackedButtons = panel.AddStackedItems(button2Data, button3Data);
+
+    // Add pulldown button
+    PulldownButtonData pulldownData = new PulldownButtonData(
+        "Options", 
+        "More Options");
+    PulldownButton pulldown = panel.AddItem(pulldownData) as PulldownButton;
+
+    // Add items to pulldown
+    PushButtonData subButton1Data = /* ... */;
+    pulldown.AddPushButton(subButton1Data);
+    
+    return Result.Succeeded;
+}
+```
+
+## 5. Best Practices
+
+1. **Command Isolation**: Each command should be independent and not rely on other commands' state
+2. **State Management**: Use `ExternalCommandData` and document properties rather than static variables
+3. **Performance**: Use `FilteredElementCollector` efficiently, minimize document modifications
+4. **User Feedback**: Provide progress bars for long operations using `IDisplayUnit`
+5. **Testing**: Implement unit tests for business logic (mock Revit API where needed)
+6. **Documentation**: XML documentation for all public members
+7. **Versioning**: Support multiple Revit versions with conditional compilation
+
+## 6. Example Command Structure
+
+```csharp
+/// <summary>
+/// Sample command implementation following best practices
+/// </summary>
+[Transaction(TransactionMode.Manual)]
+[Regeneration(RegenerationOption.Manual)]
+public class SampleCommand : IExternalCommand
+{
+    public Result Execute(
+        ExternalCommandData commandData,
+        ref string message,
+        ElementSet elements)
+    {
+        // Validate input
+        if (commandData == null)
+        {
+            message = "Invalid command data";
+            return Result.Failed;
+        }
+
+        UIApplication uiApp = commandData.Application;
+        UIDocument uiDoc = uiApp.ActiveUIDocument;
+        Document doc = uiDoc?.Document;
+
+        if (doc == null)
+        {
+            message = "No active document";
+            return Result.Failed;
+        }
+
+        try
+        {
+            using (Transaction t = new Transaction(doc, "Sample Operation"))
+            {
+                t.Start();
+
+                // Perform operation
+                bool success = PerformOperation(doc);
+                
+                if (!success)
+                {
+                    t.RollBack();
+                    message = "Operation failed";
+                    return Result.Failed;
+                }
+
+                t.Commit();
+            }
+
+            return Result.Succeeded;
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+            Logger.Error(ex, "Command execution failed");
+            return Result.Failed;
+        }
+    }
+
+    private bool PerformOperation(Document doc)
+    {
+        // Business logic here
+        return true;
+    }
+}
+``` 
+
+## 7. Project and Code Organization
+
+### Command Folder Structure
+- Create a dedicated folder for each PushButton's corresponding command.
+- The folder should be named descriptively, relating to the command's function.
+- All files related to the command (e.g., Command logic, View models, UI windows) should be contained within this folder.
+
+Example Project Structure:
+```
+/Commands/
+  /CreateFormwork/
+    CreateFormworkCommand.cs
+    CreateFormworkView.xaml
+    CreateFormworkViewModel.cs
+  /ManageViews/
+    ManageViewsCommand.cs
+    ManageViewsWindow.cs
+``` 

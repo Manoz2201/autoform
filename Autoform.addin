@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Autoform</Name>
+    <Assembly>Autoform.dll</Assembly>
+    <ClientId>8b96fcb3-236b-4ef2-a5dc-dd05e12a613d</ClientId>
+    <FullClassName>Autoform.AdskApplication</FullClassName>
+    <VendorId>ADSK</VendorId>
+    <VendorDescription>Autodesk, Inc.</VendorDescription>
+  </AddIn>
+</RevitAddIns>
